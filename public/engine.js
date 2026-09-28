@@ -142,9 +142,11 @@ window.TM = (() => {
     const stRef = { ...DEFAULT_STYLE, ...(cfg.style || {}) };   // unscaled style for measuring
     const lines = maxPx ? wrapLines(typed, stRef, maxPx) : typed;
     const wrapped = lines.length > typed.length;
-    // the text box itself is also capped so effects that lay out with CSS wrap at the same width
+    // the text box itself is also capped so effects that lay out with CSS wrap at the same width.
+    // white-space stays `pre` (from stage.html): it never auto-wraps either, and unlike `nowrap` it keeps
+    // a lone " " span at its real width (nowrap collapsed them to 0 -> "Fakerleaves" in Typewriter/Decoder).
     root.style.maxWidth = maxPx ? maxPx * k + 'px' : '';
-    root.style.whiteSpace = 'nowrap';
+    root.style.whiteSpace = '';
     if (wrapped && (cfg.style == null || cfg.style.leading == null || +cfg.style.leading === DEFAULT_STYLE.leading)) { root.style.lineHeight = WRAP_LEADING; style.leading = WRAP_LEADING; }
     drawGuide(style, k, maxPx);
     const ctx = { style, params, timing, stage, width: cfg.width / k, height: cfg.height / k, scale: k, fps: +cfg.fps || 30, kind: def.kind || 'text', ...E };
