@@ -7,9 +7,11 @@
 <style>
 html, body { margin:0; background:transparent; overflow:hidden; }
 #stage { position:relative; width:1920px; height:1080px; background:transparent; overflow:hidden; }
-#text { position:absolute; white-space:pre; font-variant-numeric:tabular-nums; }
+#text { position:absolute; white-space:pre; }
 #text .l { display:block; min-height:1em; }
-#text .slot { display:inline-block; position:relative; height:1em; vertical-align:top; }
+/* tabular digits only inside Decoder's fixed-width letter slots. NOT on #text: some fonts (Zalando Sans)
+   also widen the space glyph under tnum, which made word gaps ~2.4x too wide in every word-based effect. */
+#text .slot { display:inline-block; position:relative; height:1em; vertical-align:top; font-variant-numeric:tabular-nums; }
 #text .ly { position:absolute; left:0; top:0; opacity:0; will-change:opacity,transform; }
 </style>
 </head>
