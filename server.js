@@ -69,7 +69,7 @@ app.get('/api/env', (req, res) => res.json({ hosted: HOSTED, allow4k: ALLOW_4K }
  * Family name = file name up to the first "-" or "[" (Archivo[wdth,wght].ttf → Archivo,
  * Archivo-Italic[...] → Archivo italic). Variable fonts get full weight/width ranges. */
 function fontFiles() {
-  return fs.readdirSync(FONTS).filter(f => /\.(ttf|otf|woff2?)$/i.test(f)).map(file => {
+  const all = fs.readdirSync(FONTS).filter(f => /\.(ttf|otf|woff2?)$/i.test(f)).map(file => {
     const base = file.replace(/\.[^.]+$/, '');
     const family = base.split(/[-\[]/)[0];
     const italic = /italic/i.test(base);
@@ -79,6 +79,14 @@ function fontFiles() {
     const weight = variable ? '100 900' : (weightMatch ? weights[weightMatch[1].toLowerCase()] : 400);
     return { file, family, italic, variable, weight };
   });
+  // If a family has a variable font, ignore its static cuts: 18 overlapping @font-face rules for one family
+  // make the browser pick unpredictably (this is what happens when someone uploads a whole Google Fonts zip).
+  // Also prefer one file per (family, italic) among variables: a plain [wght] over the [wdth,wght,slnt] variants.
+  const hasVar = new Set(all.filter(f => f.variable).map(f => f.family + '|' + f.italic));
+  const kept = all.filter(f => f.variable || !hasVar.has(f.family + '|' + f.italic));
+  const seen = new Map();
+  for (const f of kept.filter(f => f.variable).sort((a, b) => a.file.length - b.file.length)) { const k = f.family + '|' + f.italic; if (!seen.has(k)) seen.set(k, f.file); }
+  return kept.filter(f => !f.variable || seen.get(f.family + '|' + f.italic) === f.file);
 }
 app.get('/api/fonts.css', (req, res) => {
   const css = fontFiles().map(f => `@font-face{font-family:"${f.family}";src:url("/fonts/${encodeURIComponent(f.file)}");font-weight:${f.weight};${f.variable ? 'font-stretch:50% 200%;' : ''}font-style:${f.italic ? 'italic' : 'normal'};font-display:block;}`).join('\n');
